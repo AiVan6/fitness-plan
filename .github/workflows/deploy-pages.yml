@@ -1,3 +1,8 @@
+# Деплой на GitHub Pages (источник: GitHub Actions).
+#
+# Обязательно один раз: Settings → Pages → Build and deployment → Source: GitHub Actions.
+# Если деплой «висит» на ожидании: Settings → Environments → github-pages — сними лишние правила защиты или подтверди деплой.
+
 name: Deploy GitHub Pages
 
 on:
@@ -19,15 +24,22 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
+
+      - name: Setup Pages
+        id: pages
+        uses: actions/configure-pages@v5
+
       - uses: actions/setup-node@v4
         with:
-          node-version: '22'
+          node-version: '20'
           cache: npm
+
       - run: npm ci
       - name: Build
         run: npm run build
         env:
-          GITHUB_REPOSITORY: ${{ github.repository }}
+          GITHUB_PAGES_BASE: ${{ steps.pages.outputs.base_path }}
+
       - uses: actions/upload-pages-artifact@v3
         with:
           path: dist
@@ -35,9 +47,12 @@ jobs:
   deploy:
     needs: build
     runs-on: ubuntu-latest
+    permissions:
+      pages: write
+      id-token: write
     environment:
       name: github-pages
       url: ${{ steps.deployment.outputs.page_url }}
     steps:
       - id: deployment
-        uses: actions/deploy-pages@v4
+        uses: actions/deploy-pages@v5
